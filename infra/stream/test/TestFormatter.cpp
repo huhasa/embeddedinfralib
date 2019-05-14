@@ -5,7 +5,7 @@ class FormatTest : public testing::Test
 {
 protected:
     template<typename... Args>
-    void CheckFormatArguments(const char* expected, const char* format, Args&&... args)
+    static void CheckFormatArguments(const char* expected, const char* format, Args&&... args)
     {
         infra::StringOutputStream::WithStorage<60> stream(infra::softFail);
         stream << infra::Format(format, args...);
@@ -14,7 +14,7 @@ protected:
     }
 
     template<class T>
-    void CheckLimits(const char* expected, T value)
+    static void CheckLimits(const char* expected, T value)
     {
         CheckFormatArguments(expected, "{}..{}", std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
     }
