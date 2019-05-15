@@ -26,6 +26,14 @@ namespace infra
         virtual ~ScannerBase() = default;
         virtual void Scan(TextInputStream& stream, ScanSpec& spec) = 0;
 
+    protected:
+        static int64_t SignedInteger(TextInputStream& stream);
+        static uint64_t UnsignedInteger(TextInputStream& stream);
+
+    private:
+        static void SkipWhiteSpace(TextInputStream& stream);
+        static bool IsNegative(TextInputStream& stream);
+        static uint64_t RawInteger(TextInputStream& stream);
     };
 
     template<typename T>
@@ -47,7 +55,28 @@ namespace infra
     {}
 
     template<>
+    void Scanner<uint8_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<uint16_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
     void Scanner<uint32_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<uint64_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<int8_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<int16_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<int32_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template<>
+    void Scanner<int64_t>::Scan(TextInputStream& stream, ScanSpec& spec);
 
     template<class T>
     auto MakeScanner(T& v)
@@ -62,11 +91,9 @@ namespace infra
 
     private:
         bool IsEndFormat() const;
-        uint32_t ParseIndex();
 
     private:
         const char* format;
-        uint32_t autoIndex{};
     };
 
     template<class... Args>
