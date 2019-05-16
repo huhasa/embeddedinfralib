@@ -9,7 +9,7 @@ namespace infra
     {
         explicit ScanSpec(const char*& format);
 
-        std::size_t width{ 0 };
+        std::size_t width{ std::numeric_limits<std::size_t>::max() };
         char type{ '\0' };
 
     private:
@@ -27,13 +27,13 @@ namespace infra
         virtual void Scan(TextInputStream& stream, ScanSpec& spec) = 0;
 
     protected:
-        static int64_t SignedInteger(TextInputStream& stream);
-        static uint64_t UnsignedInteger(TextInputStream& stream);
+        static int64_t SignedInteger(TextInputStream& stream, ScanSpec& spec);
+        static uint64_t UnsignedInteger(TextInputStream& stream, ScanSpec& spec);
 
     private:
         static void SkipWhiteSpace(TextInputStream& stream);
         static bool IsNegative(TextInputStream& stream);
-        static uint64_t RawInteger(TextInputStream& stream);
+        static uint64_t RawInteger(TextInputStream& stream, ScanSpec& spec);
     };
 
     template<typename T>
@@ -77,6 +77,9 @@ namespace infra
 
     template<>
     void Scanner<int64_t>::Scan(TextInputStream& stream, ScanSpec& spec);
+
+    template <>
+    void Scanner<BoundedString>::Scan(TextInputStream& stream, ScanSpec& spec);
 
     template<class T>
     auto MakeScanner(T& v)

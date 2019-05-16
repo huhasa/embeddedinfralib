@@ -31,6 +31,13 @@ TEST_F(ScannerTest, Simple)
     EXPECT_EQ(10, value);
 }
 
+TEST_F(ScannerTest, IntegerLimitedWidth)
+{
+    uint32_t value{};
+    CheckFormatArguments("12345", "{:2}", value);
+    EXPECT_EQ(12, value);
+}
+
 TEST_F(ScannerTest, SkipLeadingSpaces)
 {
     uint32_t value{};
@@ -76,4 +83,20 @@ TEST_F(ScannerTest, int_uint64)
 TEST_F(ScannerTest, int_int64)
 {
     CheckLimits("-9223372036854775808..9223372036854775807", int64_t());
+}
+
+TEST_F(ScannerTest, boundedString)
+{
+    const infra::BoundedString::WithStorage<5> v;
+    infra::BoundedString value(v);
+    CheckFormatArguments("hello", "{}", value);
+    EXPECT_EQ("hello", value);
+}
+
+TEST_F(ScannerTest, boundedStringWithWidth)
+{
+    const infra::BoundedString::WithStorage<5> v;
+    infra::BoundedString value(v);
+    CheckFormatArguments("hello", "{:2}", value);
+    EXPECT_EQ("he", value);
 }

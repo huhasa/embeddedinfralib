@@ -15,6 +15,9 @@ namespace infra
 
     void ScanSpec::ParseWidth()
     {
+        if (!isdigit(*format))
+            return;
+        width = 0;
         while (isdigit(*format))
             width = 10 * width + *format++ - '0';
     }
@@ -48,13 +51,14 @@ namespace infra
         return c == '-';
     }
 
-    uint64_t ScannerBase::RawInteger(TextInputStream& stream)
+    uint64_t ScannerBase::RawInteger(TextInputStream& stream, ScanSpec& spec)
     {
         const auto peek = stream.Reader().PeekContiguousRange(0);
+        const auto maxIndex = std::min(peek.size(), spec.width);
         size_t index{};
-
         uint64_t value{};
-        for (; index < peek.size(); index++)
+
+        for (; index < maxIndex; index++)
         {
             const auto c = peek[index];
             if (!isdigit(c))
@@ -66,66 +70,75 @@ namespace infra
         return value;
     }
 
-    int64_t ScannerBase::SignedInteger(TextInputStream& stream)
+    int64_t ScannerBase::SignedInteger(TextInputStream& stream, ScanSpec& spec)
     {
         SkipWhiteSpace(stream);
         const auto negative = IsNegative(stream);
-        const  auto val = RawInteger(stream);
+        const  auto val = RawInteger(stream, spec);
         return negative ? -static_cast<int64_t>(val) : val;
     }
 
-    uint64_t ScannerBase::UnsignedInteger(TextInputStream& stream)
+    uint64_t ScannerBase::UnsignedInteger(TextInputStream& stream, ScanSpec& spec)
     {
         SkipWhiteSpace(stream);
-        return RawInteger(stream);
+        return RawInteger(stream, spec);
     }
 
     template<>
     void Scanner<uint8_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<uint8_t>(UnsignedInteger(stream));
+        value = static_cast<uint8_t>(UnsignedInteger(stream, spec));
     }
 
     template<>
     void Scanner<uint16_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<uint16_t>(UnsignedInteger(stream));
+        value = static_cast<uint16_t>(UnsignedInteger(stream, spec));
     }
 
     template<>
     void Scanner<uint32_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<uint32_t>(UnsignedInteger(stream));
+        value = static_cast<uint32_t>(UnsignedInteger(stream, spec));
     }
 
     template<>
     void Scanner<uint64_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = UnsignedInteger(stream);
+        value = UnsignedInteger(stream, spec);
     }
 
     template<>
     void Scanner<int8_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<int8_t>(SignedInteger(stream));;
+        value = static_cast<int8_t>(SignedInteger(stream, spec));;
     }
 
     template<>
     void Scanner<int16_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<int16_t>(SignedInteger(stream));;
+        value = static_cast<int16_t>(SignedInteger(stream, spec));;
     }
 
     template<>
     void Scanner<int32_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = static_cast<int32_t>(SignedInteger(stream));;
+        value = static_cast<int32_t>(SignedInteger(stream, spec));;
     }
 
     template<>
     void Scanner<int64_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        value = SignedInteger(stream);
+        value = SignedInteger(stream, spec);
+    }
+
+    template<>
+    void Scanner<BoundedString>::Scan(TextInputStream& stream, ScanSpec& spec)
+    {
+        const auto peek = stream.Reader().PeekContiguousRange(0);
+        const auto size = std::min(std::min(spec.width, value.max_size()), peek.size());
+        value.append(reinterpret_cast<const char*>(peek.begin()), size);
+        stream.Consume(size);
     }
 
     ScanWorker::ScanWorker(TextInputStream& stream, const char* formatStr, std::vector<ScannerBase*>& scanners)
