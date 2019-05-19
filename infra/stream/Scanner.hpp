@@ -27,11 +27,11 @@ namespace infra
         virtual void Scan(TextInputStream& stream, ScanSpec& spec) = 0;
 
     protected:
+        static void SkipWhiteSpace(TextInputStream& stream);
         static int64_t SignedInteger(TextInputStream& stream, ScanSpec& spec);
         static uint64_t UnsignedInteger(TextInputStream& stream, ScanSpec& spec);
 
     private:
-        static void SkipWhiteSpace(TextInputStream& stream);
         static bool IsNegative(TextInputStream& stream);
         static uint64_t RawInteger(TextInputStream& stream, ScanSpec& spec);
     };
@@ -53,6 +53,9 @@ namespace infra
     Scanner<T>::Scanner(T& value)
         : value(value)
     {}
+
+    template<>
+    void Scanner<bool>::Scan(TextInputStream& stream, ScanSpec& spec);
 
     template<>
     void Scanner<uint8_t>::Scan(TextInputStream& stream, ScanSpec& spec);

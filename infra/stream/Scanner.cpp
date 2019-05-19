@@ -115,6 +115,31 @@ namespace infra
     }
 
     template<>
+    void Scanner<bool>::Scan(TextInputStream& stream, ScanSpec& spec)
+    {
+        auto handle = [&stream](const char* compare, bool val, bool &value)
+        {
+            auto peek = stream.Reader().PeekContiguousRange(0);
+            auto size = strlen(compare);
+            peek.shrink_from_back_to(size);
+
+            if (peek.size() < size)
+                return false;
+            for (auto c: peek)
+                if (c != *compare++)
+                    return false;
+
+            stream.Consume(size);
+            value = val;
+            return true;
+        };
+
+        SkipWhiteSpace(stream);
+        if (!handle("true", true, value) && !handle("false", false, value))
+            stream.ErrorPolicy().ReportResult(false);
+    }
+
+    template<>
     void Scanner<uint8_t>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
         value = static_cast<uint8_t>(UnsignedInteger(stream, spec));

@@ -71,6 +71,24 @@ TEST_F(ScannerTest, SkipLeadingSpaces)
     EXPECT_EQ(10, value);
 }
 
+TEST_F(ScannerTest, boolean)
+{
+    CheckLimits("false..true", bool());
+}
+
+TEST_F(ScannerTest, booleanWrong)
+{
+    bool b{};
+    FailedScanArguments("fals", b);
+}
+
+TEST_F(ScannerTest, booleanLeadingSpaces)
+{
+    bool b{};
+    CheckScanArguments("  true", "{}", b);
+    EXPECT_EQ(true, b);
+}
+
 TEST_F(ScannerTest, int_uint8)
 {
     CheckLimits("0..255", uint8_t());
