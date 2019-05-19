@@ -5,17 +5,26 @@ class FormatTest : public testing::Test
 {
 protected:
     template<typename... Args>
-    void CheckFormatArguments(const char* expected, const char* format, Args&&... args)
+   static void CheckFormatArguments(const char* expected, const char* format, Args&&... args)
     {
-        infra::StringOutputStream::WithStorage<60> stream;
+        infra::StringOutputStream::WithStorage<60> stream(infra::softFail);
         stream << infra::Format(format, args...);
-        EXPECT_EQ(expected, stream.Storage());
+        EXPECT_FALSE(stream.ErrorPolicy().Failed());
+       EXPECT_EQ(expected, stream.Storage());
     }
 
     template<class T>
-    void CheckLimits(const char* expected, T value)
+    static void CheckLimits(const char* expected, T value)
     {
         CheckFormatArguments(expected, "{}..{}", std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
+    }
+
+    template<typename... Args>
+    static void FailedFormatArguments(const char* format, Args&&... args)
+    {
+        infra::StringOutputStream::WithStorage<60> stream(infra::softFail);
+        stream << infra::Format(format, args...);
+        EXPECT_TRUE(stream.ErrorPolicy().Failed());
     }
 };
 
@@ -31,12 +40,12 @@ TEST_F(FormatTest, simple_string)
 
 TEST_F(FormatTest, missing_argument)
 {
-    CheckFormatArguments("}", "{}");
+    FailedFormatArguments("{}");
 }
 
 TEST_F(FormatTest, out_of_index)
 {
-    CheckFormatArguments("}", "{1}");
+    FailedFormatArguments("{1}");
 }
 
 TEST_F(FormatTest, string_width)
@@ -149,9 +158,14 @@ TEST_F(FormatTest, integer12no_index)
     CheckFormatArguments("12", "{}", 12);
 }
 
-TEST_F(FormatTest, multino_index)
+TEST_F(FormatTest, multi_no_index)
 {
     CheckFormatArguments("Twelve=12", "{}={}", "Twelve", 12);
+}
+
+TEST_F(FormatTest, integer_wrong_type)
+{
+    FailedFormatArguments("{0:t}", 0);
 }
 
 TEST_F(FormatTest, integer_oct)
@@ -215,13 +229,13 @@ void infra::Formatter<testFormat::TestFormatObject&>::Format(TextOutputStream& s
     stream << infra::Format("v:{},b:{}", value.v, value.b);
 }
 
-TEST_F(FormatTest, FormatObject)
+TEST_F(FormatTest, FormatObjectSimple)
 {
     CheckFormatArguments("v:9,b:true", "{}", testFormat::TestFormatObject());
 }
 
 
-TEST_F(FormatTest, Format3)
+TEST_F(FormatTest, FormatObjectCombined)
 {
     CheckFormatArguments("Hello ..1.. 2 1 v:9,b:true",  "Hello {0:.^5} {1} {0} {2}", 1, 2, testFormat::TestFormatObject());
 }

@@ -86,7 +86,7 @@ namespace infra
     };
 
     template<class T>
-    struct DecayArray
+    struct DecayFormatType
     {
         using type = typename std::conditional <
             std::is_integral<typename std::remove_reference<T>::type>::value,
@@ -95,15 +95,15 @@ namespace infra
     };
 
     template<std::size_t N>
-    struct DecayArray<const char(&)[N]>
-    {
+   struct DecayFormatType<const char(&)[N]>
+   {
         using type = const char*;
     };
 
     template<class T>
-    Formatter<typename DecayArray<T>::type> MakeFormatter(T&& v)
+    Formatter<typename DecayFormatType<T>::type> MakeFormatter(T&& v)
     {
-        return Formatter<typename DecayArray<T>::type>(std::forward<T>(v));
+        return Formatter<typename DecayFormatType<T>::type>(std::forward<T>(v));
     }
 
     template<>
@@ -140,18 +140,7 @@ namespace infra
     class FormatHelper
     {
     public:
-        template<std::size_t... Is>
-        std::vector<FormatterBase*> Make(std::index_sequence<Is...>)
-        {
-            return{ &std::get<Is>(args)... };
-        }
-
-        std::vector<FormatterBase*> MakeFormatter()
-        {
-            return Make(std::index_sequence_for<Args...>{});
-        };
-
-        explicit FormatHelper(const char* format, Args&&... args)
+       explicit FormatHelper(const char* format, Args&&... args)
             : format(format)
             , args(std::forward<Args>(args)...)
             , formatters{ MakeFormatter() }
@@ -171,6 +160,17 @@ namespace infra
         }
 
     private:
+        template<std::size_t... Is>
+        std::vector<FormatterBase*> Make(std::index_sequence<Is...>)
+        {
+            return{ &std::get<Is>(args)... };
+        }
+
+        std::vector<FormatterBase*> MakeFormatter()
+        {
+            return Make(std::index_sequence_for<Args...>{});
+        };
+
         const char* format;
         std::tuple<Args ...> args;
         std::vector<FormatterBase*> formatters{ sizeof...(Args), nullptr };
@@ -180,7 +180,7 @@ namespace infra
     template<class... Args>
     auto Format(const char* format, Args&&... args)
     {
-        return FormatHelper<Formatter<typename DecayArray<Args>::type>...>(format, MakeFormatter(std::forward<Args>(args))...);
+        return FormatHelper<Formatter<typename DecayFormatType<Args>::type>...>(format, MakeFormatter(std::forward<Args>(args))...);
     }
 }
 #endif

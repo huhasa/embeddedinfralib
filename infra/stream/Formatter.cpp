@@ -102,7 +102,7 @@ namespace infra
         BoundedString::WithStorage<size> buffer;
         auto index(size-1);
 
-        decltype(value) divider = 10;
+        decltype(value) divider;
         switch (spec.type)
         {
         case 'x':
@@ -115,8 +115,13 @@ namespace infra
         case 'b':
             divider = 2;
             break;
-        default:
+        case 'd':
+        case '\0':
+            divider = 10;
             break;
+        default:
+            stream.ErrorPolicy().ReportResult(false);
+            return;
         }
 
         const auto digits = isupper(spec.type) ? "0123456789ABCDEF" : "0123456789abcdef";
@@ -206,10 +211,10 @@ namespace infra
         RawFormat(stream, str, spec);
     }
 
-    FormatWorker::FormatWorker(TextOutputStream& writer, const char* formatStr, std::vector<FormatterBase*>& formatters)
+    FormatWorker::FormatWorker(TextOutputStream& stream, const char* formatStr, std::vector<FormatterBase*>& formatters)
         : format(formatStr)
     {
-        for (;;)
+        do
         {
             if (IsEndFormat())
                 return;
@@ -217,19 +222,18 @@ namespace infra
             const auto ch = *format++;
             if (ch != '{')
             {
-                writer << ch;
+                stream << ch;
                 continue;
             }
 
             const auto index = ParseIndex();
             auto spec = FormatSpec(format);
 
-            if (*format == '}' && index < formatters.size())
-            {
-                formatters[index]->Format(writer, spec);
-                ++format;
-            }
-        }
+            if (*format++ == '}' && index < formatters.size())
+                formatters[index]->Format(stream, spec);
+            else
+                stream.ErrorPolicy().ReportResult(false);
+        } while (!stream.Failed());
     }
 
     bool FormatWorker::IsEndFormat() const
