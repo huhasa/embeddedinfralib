@@ -13,7 +13,7 @@ protected:
     }
 
     template<class T>
-    static void CheckLimits(const char* input, T value)
+    static void CheckLimits(const char* input)
     {
         T min{};
         T max{};
@@ -73,7 +73,7 @@ TEST_F(ScannerTest, SkipLeadingSpaces)
 
 TEST_F(ScannerTest, boolean)
 {
-    CheckLimits("false..true", bool());
+    CheckLimits<bool>("false..true");
 }
 
 TEST_F(ScannerTest, booleanWrong)
@@ -91,42 +91,42 @@ TEST_F(ScannerTest, booleanLeadingSpaces)
 
 TEST_F(ScannerTest, int_uint8)
 {
-    CheckLimits("0..255", uint8_t());
+    CheckLimits<uint8_t>("0..255");
 }
 
 TEST_F(ScannerTest, int_int8)
 {
-    CheckLimits("-128..127", int8_t());
+    CheckLimits<int8_t>("-128..127");
 }
 
 TEST_F(ScannerTest, int_uint16)
 {
-    CheckLimits("0..4294967295", uint16_t());
+    CheckLimits<uint16_t>("0..4294967295");
 }
 
 TEST_F(ScannerTest, int_int16)
 {
-    CheckLimits("-32768..32767", int16_t());
+    CheckLimits<int16_t>("-32768..32767");
 }
 
 TEST_F(ScannerTest, int_int32)
 {
-    CheckLimits("-2147483648..2147483647", int32_t());
+    CheckLimits<int32_t>("-2147483648..2147483647");
 }
 
 TEST_F(ScannerTest, int_uint32)
 {
-    CheckLimits("0..4294967295", uint32_t());
+    CheckLimits<uint32_t>("0..4294967295");
 }
 
 TEST_F(ScannerTest, int_uint64)
 {
-    CheckLimits("0..18446744073709551615", uint64_t());
+    CheckLimits<uint64_t>("0..18446744073709551615");
 }
 
 TEST_F(ScannerTest, int_int64)
 {
-    CheckLimits("-9223372036854775808..9223372036854775807", int64_t());
+    CheckLimits<int64_t>("-9223372036854775808..9223372036854775807");
 }
 
 TEST_F(ScannerTest, integer_bin)
@@ -152,10 +152,9 @@ TEST_F(ScannerTest, integer_hex)
 
 TEST_F(ScannerTest, boundedString)
 {
-    const infra::BoundedString::WithStorage<5> v;
-    infra::BoundedString value(v);
-    CheckScanArguments("hello", "{}", value);
-    EXPECT_EQ("hello", value);
+    infra::BoundedString::WithStorage<5> v;
+    CheckScanArguments("hello", "{}", v);
+    EXPECT_EQ("hello", v);
 }
 
 TEST_F(ScannerTest, boundedStringWithWidth)

@@ -138,10 +138,22 @@ namespace infra
 
     };
 
+    template<class T>
+    struct DecayScanType
+    {
+        using Type = T;
+    };
+
+    template<std::size_t N>
+    struct DecayScanType<WithStorage<BoundedString, std::array<char, N>>>
+    {
+        using Type = BoundedString;
+    };
+
     template<class... Args>
     auto Scan(const char* format, Args&... args)
     {
-        return ScannerHelper<Scanner<Args>...>(format, MakeScanner(args)...);
+        return ScannerHelper<Scanner<typename DecayScanType<Args>::Type>...>(format, Scanner<typename DecayScanType<Args>::Type>(args)...);
     }
 
 }

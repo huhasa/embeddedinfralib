@@ -59,7 +59,7 @@ namespace infra
 
         uint64_t value{};
 
-        decltype(value) base;
+        uint8_t base;
         switch (spec.type)
         {
         case 'x':
@@ -80,11 +80,11 @@ namespace infra
             return 0;
         }
 
-        auto handleChar = [&value, base](char ch)
+        const auto handleChar = [&value, base](uint8_t ch)
         {
             const auto digits = "0123456789abcdef";
             ch = tolower(ch);
-            for (auto i = 0; i<base; ++i)
+            for (decltype(base) i = 0u; i<base; ++i)
                 if (digits[i] == ch)
                 {
                     value = value * base + i;
@@ -117,10 +117,10 @@ namespace infra
     template<>
     void Scanner<bool>::Scan(TextInputStream& stream, ScanSpec& spec)
     {
-        auto handle = [&stream](const char* compare, bool val, bool &value)
+        const auto handle = [&stream, this](const char* compare, const bool val)
         {
             auto peek = stream.Reader().PeekContiguousRange(0);
-            auto size = strlen(compare);
+            const auto size = strlen(compare);
             peek.shrink_from_back_to(size);
 
             if (peek.size() < size)
@@ -135,8 +135,7 @@ namespace infra
         };
 
         SkipWhiteSpace(stream);
-        if (!handle("true", true, value) && !handle("false", false, value))
-            stream.ErrorPolicy().ReportResult(false);
+        stream.ErrorPolicy().ReportResult(handle("true", true) || handle("false", false));
     }
 
     template<>
