@@ -226,8 +226,7 @@ namespace infra
         if (index != scanners.size())
             ok = false;
 
-        if (!ok)
-            stream.ErrorPolicy().ReportResult(false);
+        stream.ErrorPolicy().ReportResult(ok);
     }
 
     bool ScanWorker::IsEndFormat() const
